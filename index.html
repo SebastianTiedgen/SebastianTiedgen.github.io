@@ -1,0 +1,432 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta property="og:title" content="">
+  <meta property="og:type" content="">
+  <meta property="og:url" content="">
+  <meta property="og:image" content="">
+
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- Place favicon.ico in the root directory -->
+
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/main.css">
+
+  <meta name="theme-color" content="#fafafa">
+
+
+  <!-- Import TensorFlow.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+  <!-- Import tfjs-vis -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis@1.0.2/dist/tfjs-vis.umd.min.js"></script>
+</head>
+
+<body>
+
+<h1 id="pagetitle">Regression mit FFNN</h1>
+
+<div class = "center">
+<form action="/action_page.php">
+  <p>Anzahl der Datenpunkten:</p>
+   <input type="radio" id="5" name="radio" value="5" onchange="handleRadioChange()">
+  <label for="5">5</label><br>
+   <input type="radio" id="10" name="radio" value="10" onchange="handleRadioChange()">
+   <label for="10">10</label><br>
+   <input type="radio" id="20" name="radio" value="20" onchange="handleRadioChange()">
+   <label for="20">20</label><br>
+  <input type="radio" id="50" name="radio" value="50" onchange="handleRadioChange()">
+  <label for="50">50</label><br>
+  <input type="radio" id="100" name="radio" value="100" onchange="handleRadioChange()" checked>
+  <label for="100">100</label>
+</form>
+
+
+<div>
+  <p>Anzahl der hidden Layer:</p>
+  <input type="number" class="form-control" id="HiddenLayerInput" onchange="handleHiddenLayerInput()" value="3">
+</div>
+<div>
+  <p>Anzahl der Neuronen pro Layer:</p>
+  <input type="number" class="form-control" id="NeuronsPerLayerInput" onchange="handleNeuronsPerLayerInput()" value="6">
+</div>
+  <br>
+  <div>
+    <button id ="under-fitting" class="button" onClick="handleUnderfitting()" >under fitting</button>
+    <button id="best-fitting" class="button" onClick="handleBestfitting()" >best fitting</button>
+    <button id="over-fitting" class="button" onClick="handleOverfitting()" >over fitting</button>
+  </div>
+  <br>
+  <div>
+    <button id ="generate-data" class="button" onClick="generateData()" >Erstelle Datensatz</button>
+    <button id="generate-model" class="button" onClick="generateModel()" disabled>Erstelle Model</button>
+  </div>
+  <div>
+  <p>Anzahl der Trainingsepochen:</p>
+  <input type="number" class="form-control" id="EpochInput" onchange="handleEpochsInput()" value="100">
+</div>
+<br>
+<div>
+  <button id ="train-button" class="button" onClick="train()" disabled>Training</button>
+  <button id = "testbutton" class="button" onClick="test()" disabled>Test</button>
+</div>
+<br>
+  <div>
+    <button id = "save-button" class="button" onClick="saveModel()" disabled>Speicher aktuelles Model</button>
+    <button id = "load-button" class="button" onClick="loadModel()" disabled>Lade letztes Model</button>
+  </div>
+</div>
+<div>
+  <input id= "documentation" type="button" width="200px" onclick="location.href='https://sebastiantiedgen.github.io/Dokumentation.html';"
+         value="Dokumentation"  style="display:none;">
+  <p><label id="docutext" for=documentation style="cursor: pointer;">Dokumentation</label></p>
+
+</div>
+
+<h2 id="Forschung">Experimentelle Ergebnisse</h2>
+
+  <p> Im Folgenden wurden die Auswirkungen der verschiedenen Parameter (Anzahl der hidden Layer, Neuronenanzahl innerhalb
+    dieser Layer sowie die Anzahl der Epochen) auf die Ergebnisse der Prediction untersucht. Dabei wurden primär die
+    Veränderungen an einem Datensatz mit 50 Datenpunkten betrachtet, um die Auswirkungen jeweils auf die gleichen
+    Grunddaten zu untersuchen. Die gewonnenen Erkenntnisse wurden beim Test mit anderen Datensatzgrößen grundsätzlich
+    bestätigt. Allerdings wurde die Varianz der Ergebnisse bei kleiner werdenden Datensätzen immer größer.
+    Als Aktivierungsfunktion wurde ReLu verwendet.
+  </p>
+
+<p>
+  Das Ergebnis der Untersuchung sagt aus, dass alle gewählten Parameter eine große Rolle bei der Qualität der
+  Prediction spielen. Eine geringe Anzahl an Trainingsepochen führt in der Regel zu under-fitting,
+  während eine besonders hohe Anzahl an Epochen oft zu over-fitting führt. Dies ist aber auch von der Anzahl der Layer
+  sowie den darin enthaltenen Neuronen abhängig. Bei einer besonders geringen Komplexität des Systems wird das System
+  trotz vieler Epochen dennoch under-fitten, wohingegen auch bei besonders hoher Komplexität
+  eine gewisse Anzahl an Epochen nötig ist. Insbesondere bei sowohl hoher Komplexität wie auch hoher Laufzeit des
+  Trainingsprozesses entsteht ein besonders hoher bias und somit over-fitting.
+  Entsprechend müssen ausgewogene Parameter gewählt werden, um ein gutes Ergebnis zu erzielen.
+</p>
+<p>
+  Im Folgenden gilt: D = Datensatzgröße, L = Anzahl der hidden Layer, N = Neuronen pro Layer, E = Anzahl der Trainingsepochen
+</p>
+
+
+<table>
+
+  <tr>
+    <td>
+      <img src="img/D50-L1-N32-E200.png">
+      <figcaption>D:50 - L:1 - N:32 - E:200</figcaption>
+    </td>
+    <td>
+      <img src="img/D50-L6-N32-E200.png">
+      <figcaption>D:50 - L:6 - N:32 - E:200</figcaption>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="img/D50-L8-N16-E50.png">
+      <figcaption>D:50 - L:8 - N:16 - E:50</figcaption>
+    </td>
+    <td>
+      <img src="img/D50-L12-N32-E200.png">
+      <figcaption>D:50 - L:12 - N:32 - E:200</figcaption>
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+      <img src="img/D50-L32-N1-E200.png">
+      <figcaption>D:50 - L:32 - N:1 - E:200</figcaption>
+    </td>
+    <td>
+      <img src="img/D50-L8-N16-E150.png">
+      <figcaption>D:50 - L:8 - N:16 - E:150</figcaption>
+    </td>
+  </tr>
+
+
+
+  <tr>
+    <td>
+      <img src="img/D5-L3-N6-E200.png">
+      <figcaption>D:5 - L:3 - N:6 - E:200</figcaption>
+    </td>
+    <td>
+      <img src="img/D5-L3-N6-E300.png">
+      <figcaption>D:5 - L:3 - N:6 - E:300</figcaption>
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+      <img src="img/D5-L3-N6-E200.png">
+      <figcaption>D:5 - L:3 - N:6 - E:200</figcaption>
+    </td>
+    <td>
+      <img src="img/D100-L16-N-32-E200.png">
+      <figcaption>D:100 - L:16 - N:32 - E:200</figcaption>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="img/D100-L3-D6-E200.png">
+      <figcaption>D:100 - L:3 - N:6 - E:200</figcaption>
+    </td>
+    <td>
+
+    </td>
+  </tr>
+
+
+</table>
+
+
+<script>
+  let n=100;
+  let points=[];
+  let mean;
+  //Model Parameters
+  let hiddenLayers=3;
+  let neuronsPerLayer=6;
+  let activationFunction="relu";
+  let batchSize = 32;
+  let epochs = 100;
+  let model;
+  let tensorData;
+
+
+
+  function handleUnderfitting(){
+    hiddenLayers = 1;
+    document.getElementById("HiddenLayerInput").value=1;
+    neuronsPerLayer= 32 ;
+    document.getElementById("NeuronsPerLayerInput").value=32;
+    epochs = 200;
+    document.getElementById("EpochInput").value=200;
+  }
+
+  function handleBestfitting(){
+    hiddenLayers = 8;
+    document.getElementById("HiddenLayerInput").value=8;
+    neuronsPerLayer= 16 ;
+    document.getElementById("NeuronsPerLayerInput").value=16;
+    epochs = 150;
+    document.getElementById("EpochInput").value=150;
+  }
+
+  function handleOverfitting(){
+    hiddenLayers = 12;
+    document.getElementById("HiddenLayerInput").value=12;
+    neuronsPerLayer= 32 ;
+    document.getElementById("NeuronsPerLayerInput").value=32;
+    epochs = 200;
+    document.getElementById("EpochInput").value=200;
+
+
+  }
+
+  function handleRadioChange() {
+    const radios = document.getElementsByName("radio");
+    for (let radio of radios) {
+      if (radio.checked) {
+        n = +radio.value;
+        console.log("Changed: "+n)
+      }
+    }
+  }
+
+  function handleEpochsInput(){
+    if(document.getElementById("EpochInput").value>0){
+      epochs = parseInt(document.getElementById("EpochInput").value);
+      console.log("epochen: "+epochs)
+    }
+  }
+
+  function handleHiddenLayerInput(){
+    if(document.getElementById("HiddenLayerInput").value>0){
+    hiddenLayers = parseInt(document.getElementById("HiddenLayerInput").value);
+    console.log("hiddenlayer: "+hiddenLayers)
+  }
+  }
+
+  function handleNeuronsPerLayerInput(){
+    if(document.getElementById("NeuronsPerLayerInput").value>0){
+      neuronsPerLayer = parseInt(document.getElementById("NeuronsPerLayerInput").value);
+      console.log("NeuronsPerLayerInput: "+neuronsPerLayer)
+    }
+  }
+
+  function Point(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  function generateData(){
+    for(let i=0; i < n; i++){
+      let x=Math.random() * (1 - -1)  + -1;;
+      points[i]= new Point(x,((x+0.8)*(x-0.2)*(x-0.3)*(x-0.6)))
+      console.log(points[i].x,points[i].y)
+      document.getElementById("generate-model").disabled=false;
+
+    }
+  }
+
+  function calcMean(){
+    let tmp=0;
+    for (let i=0; i < points.length; i++) {
+      tmp += points[i].y;
+    }
+    mean=tmp/points.length
+  }
+
+
+  function createModel(){
+    const model = tf.sequential();
+    //add a single input layer
+    model.add(tf.layers.dense({inputShape: [1], units: 1, useBias: true}));
+    //add a single input layer
+    for (let i = 0; i < hiddenLayers; i++) {
+      model.add(
+        tf.layers.dense({
+          units: neuronsPerLayer,
+          activation: activationFunction,
+        })
+      );
+    }
+    //add an output layer
+    model.add(tf.layers.dense({units: 1, useBias: true}));
+    document.getElementById("train-button").disabled = false;
+    document.getElementById("save-button").disabled = false;
+
+    return model;
+  }
+
+  function generateModel(){
+    model = createModel();
+    tfvis.show.modelSummary({name: "Model Summary"}, model);
+  }
+
+  /**
+   * Convert the input data to tensors that we can use for machine
+   * learning. We will also do the important best practices of _shuffling_
+   * the data and _normalizing_ the data
+   * MPG on the y-axis.
+   */
+  function convertToTensor(data) {
+    // Wrapping these calculations in a tidy will dispose any
+    // intermediate tensors.
+
+    return tf.tidy(() => {
+      // Step 1. Shuffle the data
+      tf.util.shuffle(data);
+      // Step 2. Convert data to Tensor
+      const inputs = data.map(d => d.x);
+      const labels = data.map(d => d.y);
+      const inputTensor = tf.tensor2d(inputs, [inputs.length, 1]);
+      const labelTensor = tf.tensor2d(labels, [labels.length, 1]);
+      //Step 3. Normalize the data to the range 0 - 1 using min-max scaling
+      const inputMax = inputTensor.max();
+      const inputMin = inputTensor.min();
+      const labelMax = labelTensor.max();
+      const labelMin = labelTensor.min();
+      const normalizedInputs = inputTensor.sub(inputMin).div(inputMax.sub(inputMin));
+      const normalizedLabels = labelTensor.sub(labelMin).div(labelMax.sub(labelMin));
+      return {
+        inputs: normalizedInputs,
+        labels: normalizedLabels,
+        // Return the min/max bounds so we can use them later.
+        inputMax,
+        inputMin,
+        labelMax,
+        labelMin,
+      }
+    });
+  }
+
+  async function trainModel(model, inputs, labels) {
+    // Prepare the model for training.
+
+    model.compile({
+      optimizer: tf.train.adam(),
+      loss: tf.losses.meanSquaredError,
+      metrics: ['mse'],
+    });
+    return await model.fit(inputs, labels, {
+      batchSize,
+      epochs,
+      shuffle: true,
+      callbacks: tfvis.show.fitCallbacks(
+        { name: 'Training Performance' },
+        ['loss', 'mse'],
+        { height: 200, callbacks: ['onEpochEnd'] }
+      )
+    });
+  }
+
+  // Convert the data to a form we can use for training.
+  async function train(){
+    tensorData = convertToTensor(points);
+    const {inputs, labels} = tensorData;
+    // Train the model
+    await trainModel(model, inputs, labels);
+    document.getElementById("testbutton").disabled = false;
+    console.log('Done Training');
+  }
+
+  function test(){
+    testModel(model,points,tensorData);
+  }
+
+  function testModel(model, inputData, normalizationData) {
+    const {inputMax, inputMin, labelMin, labelMax} = normalizationData;
+
+    // Generate predictions for a uniform range of numbers between 0 and 1;
+    // We un-normalize the data by doing the inverse of the min-max scaling
+    // that we did earlier.
+    const [xs, preds] = tf.tidy(() => {
+      const xs = tf.linspace(0, 1, 100);
+      const preds = model.predict(xs.reshape([100, 1]));
+      const unNormXs = xs.mul(inputMax.sub(inputMin)).add(inputMin);
+      const unNormPreds = preds.mul(labelMax.sub(labelMin)).add(labelMin);
+      // Un-normalize the data
+      return [unNormXs.dataSync(), unNormPreds.dataSync()];
+    });
+    const predictedPoints = Array.from(xs).map((val, i) => {return {x: val, y: preds[i]}});
+    const originalPoints = points.map(d => ({x: d.x, y: d.y,}));
+
+    for(let i=0; i < n; i++){
+      console.log("points beim print " +points[i].x,points[i].y)
+      console.log("orig beim print " +originalPoints[i].x,originalPoints[i].y)
+    }
+
+    tfvis.render.scatterplot(
+      {name: 'Model Predictions vs Original Data'},
+      {values: [originalPoints, predictedPoints], series: ['original', 'predicted']},
+      {
+        xLabel: 'x',
+        yLabel: 'y',
+        height: 300
+      }
+    );
+  }
+
+  async function saveModel() {
+    await model.save("localstorage://my-model");
+     document.getElementById("load-button").disabled=false;
+
+  }
+
+  async function loadModel() {
+    model = await tf.loadLayersModel("localstorage://my-model");
+    tfvis.show.modelSummary({ name: "Model Summary" }, model);
+  }
+
+
+</script>
+</body>
+
+</html>
